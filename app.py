@@ -1,10 +1,9 @@
 import telebot
 import requests
+import json
 
 TOKEN = "1680972792:AAEaZO68WjS0ZRqKXojW6Zv0j2ptxfeV_F0"
-
 bot = telebot.TeleBot(TOKEN)
-
 keys = {
     'биткоин': 'BTC',
     'эфириум': 'ETH',
@@ -35,7 +34,10 @@ def values(message: telebot.types.Message):
 @bot.message_handler(content_types=['text', ])
 def convert(message: telebot.types.Message):
     quote, base, amount = message.text.split(' ')
-    r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={quote}&tsyms={base}')
+    r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={keys[quote]}&tsyms={keys[base]}')
+    total_base = json.loads(r.content)[keys[base]]
+    text = f'{amount} {quote} = {float(total_base) * float(amount)} {base}'
+    bot.send_message(message.chat.id, text)
 
 
 @bot.message_handler()
