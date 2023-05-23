@@ -78,13 +78,13 @@ def convert(message: telebot.types.Message):
     bot.send_message(message.chat.id, text)
 
 
-@bot.message_handler()
-def echo_test(message: telebot.types.Message):
-    if 'биткоин'.casefold() in message.text:
-        txt = 'биткоин'
-        bot.send_message(message.chat.id, f"Привет! Да, у меня есть {txt}")
-    else:
-        bot.reply_to(message, 'Нет, извини, нету...')
+# @bot.message_handler()
+# def echo_test(message: telebot.types.Message):
+#     if 'биткоин'.casefold() in message.text:
+#         txt = 'биткоин'
+#         bot.send_message(message.chat.id, f"Привет! Да, у меня есть {txt}")
+#     else:
+#         bot.reply_to(message, 'Нет, извини, нету...')
 
 
 bot.polling(non_stop=True)
