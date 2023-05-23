@@ -20,6 +20,34 @@ class ConvertException(Exception):
     ...
 
 
+class CurrencyConverter:
+    @staticmethod
+    def converter(quote: str, base: str, amount: str):
+        if quote == base:  # не введена ли одна и та же валюта?
+            raise ConvertException(f'Нельзя перевести валюту в саму себя')
+
+        try:  # проверка правильности написания первой валюты:
+            quote_ticker = keys[quote]
+        except KeyError:
+            raise ConvertException(f'Валюта {quote} не найдена')
+
+        try:  # и второй валюты
+            base_ticker = keys[base]
+        except KeyError:
+            raise ConvertException(f'Валюта {base} не найдена')
+
+        try:  # проверка корректности введенного количества и перевод его в тип float
+            amount = float(amount)
+        except ValueError:
+            raise ConvertException(f'Не удалось обработать количество {amount}')
+
+        r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={quote_ticker}&tsyms={base_ticker}')
+        # итог: базовая цена валюты * количество:
+        total_base = float(json.loads(r.content)[keys[base]]) * amount
+
+        return total_base
+
+
 @bot.message_handler(commands=['start', 'help'])
 def help(message: telebot.types.Message):
     text = 'Чтобы начать работу, введите команду боту в следующем формате:\n<имя валюты> \
@@ -41,32 +69,12 @@ def values(message: telebot.types.Message):
 def convert(message: telebot.types.Message):
     values = message.text.split(' ')  # сначала переносим параметры в список
 
-    if len(values) != 3:  # проверяем число введенных параметров
+    if len(values) != 3:  # проверка на число введенных параметров
         raise ConvertException('Неверное число параметров')
 
     quote, base, amount = values  # распаковываем список
-
-    if quote == base:  # не введена ли одна и та же валюта?
-        raise ConvertException(f'Нельзя перевести валюту в саму себя')
-
-    try: # проверка правильности написания первой валюты:
-        quote_ticker = keys[quote]
-    except KeyError:
-        raise ConvertException(f'Валюта {quote} не найдена')
-
-    try: # и второй валюты
-        base_ticker = keys[base]
-    except KeyError:
-        raise ConvertException(f'Валюта {base} не найдена')
-
-    try: # проверка корректности введенного количества и приведение его к типу float
-        amount = float(amount)
-    except ValueError:
-        raise ConvertException(f'Не удалось обработать количество {amount}')
-
-    r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={quote_ticker}&tsyms={base_ticker}')
-    total_base = float(json.loads(r.content)[keys[base]])
-    text = f'{amount} {quote_ticker} ({quote}) = {total_base * amount} {base_ticker} ({base})'
+    total_base = CurrencyConverter.converter(quote, base, amount)
+    text = f'{amount} {keys[quote]} ({quote}) = {total_base} {keys[base]} ({base})'
     bot.send_message(message.chat.id, text)
 
 
